@@ -1,388 +1,496 @@
 <html>
-<style>
-button{
-height: 25px;
-width: 25px;
-border-radius: 25px;
-border: 3px solid #000;	
-}
-</style>
-<body>
-<canvas id="myCanvas">
-Your browser does not support the HTML5 canvas tag.</canvas>
-<script>
-var a=[[[0,1,2],[0,9,21]],[[0,1,2],[1,4,7]],[[0,1,2],[2,14,23]],[[3,4,5],[3,10,18]],[[3,4,5],[1,4,7]],[[3,4,5],[5,13,20]],[[6,7,8],[6,11,15]],[[6,7,8],[1,4,7]],[[6,7,8],[8,12,17]],[[0,9,21],[9,10,11]],[[9,10,11],[3,10,18]],[[6,11,15],[9,10,11]],[[12,13,14],[8,12,17]],[[12,13,14],[5,13,20]],[[12,13,14],[2,14,23]],[[15,16,17],[6,11,15]],[[15,16,17],[16,19,22]],[[15,16,17],[8,12,17]],[[3,10,18],[18,19,20]],[[18,19,20],[16,19,22]],[[18,19,20],[5,13,20]],[[21,22,23],[0,9,21]],[[21,22,23],[16,19,22]],[[21,22,23],[2,14,23]]];
-var move=[[1,9],[0,2,4],[1,14],[10,4],[1,3,5,7],[4,13],[11,7],[4,6,8],[7,12],[0,10,21],[9,3,18,11],[6,10,15],[8,13,17],[5,12,20,14],[2,23,13],[11,16],[15,19,17],[12,16],[10,19],[16,18,20,22],[13,19],[9,22],[21,19,23],[22,14]];
-var mflag=0,pflag=0,rflag=0,p1count=9,p2count=9,pp1count=9,pp2count=9,prevobject,prev=0,undoid=100,current=-1,prevstep="",prevrc=-1,prevrw=-1;
-design();
-function design()
-{
-var width=window.innerWidth;
-var height=window.innerHeight;
-var length;
-if(width<height)
-length=width;
-else
-length=height;
-var c=document.getElementById("myCanvas");
-var ctx=c.getContext("2d");
-var midx=width/2,midy=height/2,side1=length-2*length/10,side2=side1*2/3,side3=side1/3;
-if(width<height)
-{
-c.setAttribute("width",midx+side1/2+5);
-c.setAttribute("height",midy+side1/2+5);
-}
-else
-{
-c.setAttribute("width",((midx+side1/2)+width)/2+5);
-c.setAttribute("height",midy+side1/2+5);
-}
-ctx.rect(midx-side1/2,midy-side1/2,side1,side1);
-ctx.stroke();
-ctx.rect(midx-side2/2,midy-side2/2,side2,side2);
-ctx.stroke();
-ctx.rect(midx-side3/2,midy-side3/2,side3,side3);
-ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(midx,midy-side1/2);
-ctx.lineTo(midx,midy);
-ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(midx,midy);
-ctx.lineTo(midx+side1/2,midy);
-ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(midx,midy);
-ctx.lineTo(midx,midy+side1/2);
-ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(midx-side1/2,midy);
-ctx.lineTo(midx,midy);
-ctx.stroke();
-var x1=midx-side1/2,y1=midy-side1/2,x2=midx-side2/2,y2=midy-side2/2,x3=midx-side3/2,y3=midy-side3/2;
-var points=[[x1,y1],[x1+side1/2,y1],[x1+side1,y1],[x2,y2],[x2+side2/2,y2],[x2+side2,y2],[x3,y3],[x3+side3/2,y3],[x3+side3,y3],[x1,midy],[x2,midy],[x3,midy],[x3+side3,midy],[x2+side2,midy],[x1+side1,midy],[x3,y3+side3],[x3+side3/2,y3+side3],[x3+side3,y3+side3],[x2,y2+side2],[x2+side2/2,y2+side2],[x2+side2,y2+side2],[x1,y1+side1],[x1+side1/2,y1+side1],[x1+side1,y1+side1]];
-for(var i=0;i<24;i++){
-var button=document.createElement("button");
-button.style.backgroundColor="white";
-button.setAttribute("id",i);
-button.style.position="absolute";
-button.style.top=points[i][1]-3;
-button.style.left=points[i][0]-3;
-button.setAttribute("onclick","play(\""+button.getAttribute('id')+"\")");
-document.body.appendChild(button);
-}
-var button1=document.createElement("button");
-button1.style.backgroundColor="red";
-button1.style.position="absolute";
-button1.setAttribute("id","play1");
-document.body.appendChild(button1);
-var button2=document.createElement("button");
-button2.style.backgroundColor="green";
-button2.style.position="absolute";
-button2.setAttribute("id","play2");
-document.body.appendChild(button2);
-var button3=document.createElement("button");
-button3.innerHTML="<-";
-button3.setAttribute("id",undoid);
-button3.style.position="absolute";
-button3.setAttribute("onclick","undo()");
-document.body.appendChild(button3);
-if(width<height)
-{
-button1.style.top=((midy+side1/2)+height)/2;
-button1.style.left=midx-side3/4;
-button2.style.top=((midy+side1/2)+height)/2;
-button2.style.left=midx+side3/4;
-button3.style.top=(midy-side1/2)/2;
-button3.style.left=midx;
-}
-else
-{
-button1.style.top=midy-side3/4;
-button1.style.left=((midx+side1/2)+width)/2;
-button2.style.top=midy+side3/4;
-button2.style.left=((midx+side1/2)+width)/2;
-button3.style.top=midy;
-button3.style.left=((midx+side1/2)+width)/2;
-}
-document.getElementById('play1').style.borderColor="yellow";
-}
-function undo()
-{
-if(prevstate=="place")
-{
-if(current!=-1)
-{
-document.getElementById(current).style.backgroundColor="white";
-rflag=0;
-if(pflag==0)
-{
-p2count++;
-pflag=1;
-document.getElementById('play1').style.borderColor="black";
-document.getElementById('play2').style.borderColor="yellow";
-}
-else
-{
-p1count++;
-pflag=0;
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-}
-}
-current=-1;
-prevstate="";
-prevrc=-1;
-prevrw=-1;
-}
-else if(prevstate=="move")
-{
-if(current!=-1)
-{
-rflag=0;
-prevrc=-1;
-prevrw=-1;
-document.getElementById(prevobject).style.backgroundColor=document.getElementById(current).style.backgroundColor;
-document.getElementById(current).style.backgroundColor="white";
-if(pflag==0)
-{
-pflag=1;
-document.getElementById('play1').style.borderColor="black";
-document.getElementById('play2').style.borderColor="yellow";
-}
-else
-{
-pflag=0;
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-}
-}
-prevstate="";
-current=-1;
-}
-else if(prevstate=="remove")
-{
-if(current!=-1)
-{
-if(prevrw==-1)
-{
-document.getElementById(prevrc).style.backgroundColor="white";
-if(pflag==0)
-p2count++;
-else
-p1count++;
-}
-else
-{
-document.getElementById(prevrw).style.backgroundColor=document.getElementById(prevrc).style.backgroundColor;
-document.getElementById(prevrc).style.backgroundColor="white";
-}
-if(pflag==0)
-{
-pp1count++;
-pflag=1;
-document.getElementById('play1').style.borderColor="black";
-document.getElementById('play2').style.borderColor="yellow";
-document.getElementById(current).style.backgroundColor="red";
-}
-else
-{
-pp2count++;
-pflag=0;
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-document.getElementById(current).style.backgroundColor="green";
-}
-}
-prevstate="";
-current=-1;
-prevrc=-1;
-prevrw=-1;
-}
-}
-function play(id)
-{
-var s=document.getElementById(id).style.backgroundColor;
-var s3=document.getElementById(prev).getAttribute("style");
-document.getElementById(id).style.borderColor="yellow";
-document.getElementById(prev).style.borderColor="black";
-prev=id;
-if(s!='red'&&s!='green'&&mflag==0&&rflag==0&&(p1count>0||p2count>0))
-{
-if(pflag==0&&p1count>0)
-{
-prevstate="place";
-current=id;
-document.getElementById(id).style.backgroundColor="red";
-p1count--;
-pflag=1;
-if(check1(id)&&rflag==0)
-{
-rflag=1;
-prevrc=id;
-}
-if(rflag==0)
-{
-document.getElementById('play2').style.borderColor="yellow";
-document.getElementById('play1').style.borderColor="black";
-}
-}
-else if(p2count>0)
-{
-prevstate="place";
-current=id;
-document.getElementById(id).style.backgroundColor="green";
-p2count--;
-pflag=0;
-if(check1(id)&&rflag==0)
-{
-rflag=1;
-prevrc=id;
-}
-if(rflag==0)
-{
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-}
-}
-}
-else if(rflag==1&&mflag==0)
-{
-if(pflag==0)
-{
-if(s=='red'&&(!check1(id)))
-{
-prevstate="remove";
-current=id;
-document.getElementById(id).style.backgroundColor="white";
-rflag=0;
-pp1count--;
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-}
-}
-else if(pflag==1)
-{
-if(s=='green'&&(!check1(id)))
-{
-prevstate="remove";
-current=id;
-document.getElementById(id).style.backgroundColor="white";
-rflag=0;
-pp2count--;
-document.getElementById('play2').style.borderColor="yellow";
-document.getElementById('play1').style.borderColor="black";
-}
-}
-if(pp1count<3)
-window.alert("player2 wins");
-else if(pp2count<3)
-window.alert("player1 wins");
-}
-else if(p1count==0&&p2count==0&&mflag==0&&rflag==0)
-{
-if(pflag==0)
-{
-if(s=='red'&&check2(id))
-{
-prevobject=id;
-mflag=1;
-}
-}
-else if(pflag==1)
-{
-if(s=='green'&&check2(id))
-{
-prevobject=id;
-mflag=1;
-}
-}
-}
-else if(mflag==1)
-{
-if(check3(id,prevobject))
-{
-var s2=document.getElementById(prevobject).style.backgroundColor;
-if(s2=='red'||s2=='green'){
-prevstate="move";
-current=id;
-if(s2=='red')
-document.getElementById(id).style.backgroundColor="red";
-else if(s2=='green')
-document.getElementById(id).style.backgroundColor="green";
-document.getElementById(prevobject).style.backgroundColor="white";
-mflag=0;
-if(check1(id))
-{
-rflag=1;
-prevrc=id;
-prevrw=prevobject;
-}
-if(pflag==0)
-{
-pflag=1;
-if(rflag==0)
-{
-document.getElementById('play2').style.borderColor="yellow";
-document.getElementById('play1').style.borderColor="black";
-}
-}
-else
-{
-pflag=0;
-if(rflag==0)
-{
-document.getElementById('play1').style.borderColor="yellow";
-document.getElementById('play2').style.borderColor="black";
-}
-}
-}
-}
-else if(s=="red"||s=="green")
-prevobject=id;
-}
-}
-function check1(id)
-{
-var count;
-for(var i=0;i<2;i++)
-{
-count=0;
-for(var j=0;j<3;j++)
-{
-var s1=document.getElementById(a[id][i][j]).style.backgroundColor;
-var s2=document.getElementById(id).style.backgroundColor;
-if(s1==s2)
-count++;
-}
-if(count==3)
-return 1;
-}
-return 0;
-}
-function check2(id)
-{
-var s="";
-for(var i=0;i<move[id].length;i++)
-{
-var c=document.getElementById(move[id][i]).style.backgroundColor;
-if(c!='red'&&c!='green')
-return 1;
-}
-return 0;
-}
-function check3(id,previd)
-{
-var c=document.getElementById(id).style.backgroundColor;
-if(c=="red"||c=="green")
-return 0;
-for(var i=0;i<move[previd].length;i++)
-{
-if(move[previd][i]==id)
-return 1;
-}
-return 0;
-}
-</script>
-</body>
+   <style>
+      button{
+      height: 25px;
+      width: 25px;
+      border-radius: 25px;
+      border: 3px solid #000;	
+      }
+   </style>
+   <body>
+      <canvas id="myCanvas">
+         Your browser does not support the HTML5 canvas tag.
+      </canvas>
+      <script>
+         var a = [
+			[
+				[0, 1, 2],
+				[0, 9, 21]
+			],
+			[
+				[0, 1, 2],
+				[1, 4, 7]
+			],
+			[
+				[0, 1, 2],
+				[2, 14, 23]
+			],
+			[
+				[3, 4, 5],
+				[3, 10, 18]
+			],
+			[
+				[3, 4, 5],
+				[1, 4, 7]
+			],
+			[
+				[3, 4, 5],
+				[5, 13, 20]
+			],
+			[
+				[6, 7, 8],
+				[6, 11, 15]
+			],
+			[
+				[6, 7, 8],
+				[1, 4, 7]
+			],
+			[
+				[6, 7, 8],
+				[8, 12, 17]
+			],
+			[
+				[0, 9, 21],
+				[9, 10, 11]
+			],
+			[
+				[9, 10, 11],
+				[3, 10, 18]
+			],
+			[
+				[6, 11, 15],
+				[9, 10, 11]
+			],
+			[
+				[12, 13, 14],
+				[8, 12, 17]
+			],
+			[
+				[12, 13, 14],
+				[5, 13, 20]
+			],
+			[
+				[12, 13, 14],
+				[2, 14, 23]
+			],
+			[
+				[15, 16, 17],
+				[6, 11, 15]
+			],
+			[
+				[15, 16, 17],
+				[16, 19, 22]
+			],
+			[
+				[15, 16, 17],
+				[8, 12, 17]
+			],
+			[
+				[3, 10, 18],
+				[18, 19, 20]
+			],
+			[
+				[18, 19, 20],
+				[16, 19, 22]
+			],
+			[
+				[18, 19, 20],
+				[5, 13, 20]
+			],
+			[
+				[21, 22, 23],
+				[0, 9, 21]
+			],
+			[
+				[21, 22, 23],
+				[16, 19, 22]
+			],
+			[
+				[21, 22, 23],
+				[2, 14, 23]
+			]
+		];
+		var move = [
+			[1, 9],
+			[0, 2, 4],
+			[1, 14],
+			[10, 4],
+			[1, 3, 5, 7],
+			[4, 13],
+			[11, 7],
+			[4, 6, 8],
+			[7, 12],
+			[0, 10, 21],
+			[9, 3, 18, 11],
+			[6, 10, 15],
+			[8, 13, 17],
+			[5, 12, 20, 14],
+			[2, 23, 13],
+			[11, 16],
+			[15, 19, 17],
+			[12, 16],
+			[10, 19],
+			[16, 18, 20, 22],
+			[13, 19],
+			[9, 22],
+			[21, 19, 23],
+			[22, 14]
+		];
+		var mflag = 0,
+			pflag = 0,
+			rflag = 0,
+			p1count = 9,
+			p2count = 9,
+			pp1count = 9,
+			pp2count = 9,
+			prevobject, prev = 0,
+			undoid = 100,
+			current = -1,
+			prevstep = "",
+			prevrc = -1,
+			prevrw = -1;
+		design();
+
+		function design() {
+			var width = window.innerWidth;
+			var height = window.innerHeight;
+			var length;
+			if (width < height)
+				length = width;
+			else
+				length = height;
+			var c = document.getElementById("myCanvas");
+			var ctx = c.getContext("2d");
+			var midx = width / 2,
+				midy = height / 2,
+				side1 = length - 2 * length / 10,
+				side2 = side1 * 2 / 3,
+				side3 = side1 / 3;
+			if (width < height) {
+				c.setAttribute("width", midx + side1 / 2 + 5);
+				c.setAttribute("height", midy + side1 / 2 + 5);
+			} else {
+				c.setAttribute("width", ((midx + side1 / 2) + width) / 2 + 5);
+				c.setAttribute("height", midy + side1 / 2 + 5);
+			}
+			ctx.rect(midx - side1 / 2, midy - side1 / 2, side1, side1);
+			ctx.stroke();
+			ctx.rect(midx - side2 / 2, midy - side2 / 2, side2, side2);
+			ctx.stroke();
+			ctx.rect(midx - side3 / 2, midy - side3 / 2, side3, side3);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(midx, midy - side1 / 2);
+			ctx.lineTo(midx, midy);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(midx, midy);
+			ctx.lineTo(midx + side1 / 2, midy);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(midx, midy);
+			ctx.lineTo(midx, midy + side1 / 2);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(midx - side1 / 2, midy);
+			ctx.lineTo(midx, midy);
+			ctx.stroke();
+			var x1 = midx - side1 / 2,
+				y1 = midy - side1 / 2,
+				x2 = midx - side2 / 2,
+				y2 = midy - side2 / 2,
+				x3 = midx - side3 / 2,
+				y3 = midy - side3 / 2;
+			var points = [
+				[x1, y1],
+				[x1 + side1 / 2, y1],
+				[x1 + side1, y1],
+				[x2, y2],
+				[x2 + side2 / 2, y2],
+				[x2 + side2, y2],
+				[x3, y3],
+				[x3 + side3 / 2, y3],
+				[x3 + side3, y3],
+				[x1, midy],
+				[x2, midy],
+				[x3, midy],
+				[x3 + side3, midy],
+				[x2 + side2, midy],
+				[x1 + side1, midy],
+				[x3, y3 + side3],
+				[x3 + side3 / 2, y3 + side3],
+				[x3 + side3, y3 + side3],
+				[x2, y2 + side2],
+				[x2 + side2 / 2, y2 + side2],
+				[x2 + side2, y2 + side2],
+				[x1, y1 + side1],
+				[x1 + side1 / 2, y1 + side1],
+				[x1 + side1, y1 + side1]
+			];
+			for (var i = 0; i < 24; i++) {
+				var button = document.createElement("button");
+				button.style.backgroundColor = "white";
+				button.setAttribute("id", i);
+				button.style.position = "absolute";
+				button.style.top = points[i][1] - 3;
+				button.style.left = points[i][0] - 3;
+				button.setAttribute("onclick", "play(\"" + button.getAttribute('id') + "\")");
+				document.body.appendChild(button);
+			}
+			var button1 = document.createElement("button");
+			button1.style.backgroundColor = "red";
+			button1.style.position = "absolute";
+			button1.setAttribute("id", "play1");
+			document.body.appendChild(button1);
+			var button2 = document.createElement("button");
+			button2.style.backgroundColor = "green";
+			button2.style.position = "absolute";
+			button2.setAttribute("id", "play2");
+			document.body.appendChild(button2);
+			var button3 = document.createElement("button");
+			button3.innerHTML = "<-";
+			button3.setAttribute("id", undoid);
+			button3.style.position = "absolute";
+			button3.setAttribute("onclick", "undo()");
+			document.body.appendChild(button3);
+			if (width < height) {
+				button1.style.top = ((midy + side1 / 2) + height) / 2;
+				button1.style.left = midx - side3 / 4;
+				button2.style.top = ((midy + side1 / 2) + height) / 2;
+				button2.style.left = midx + side3 / 4;
+				button3.style.top = (midy - side1 / 2) / 2;
+				button3.style.left = midx;
+			} else {
+				button1.style.top = midy - side3 / 4;
+				button1.style.left = ((midx + side1 / 2) + width) / 2;
+				button2.style.top = midy + side3 / 4;
+				button2.style.left = ((midx + side1 / 2) + width) / 2;
+				button3.style.top = midy;
+				button3.style.left = ((midx + side1 / 2) + width) / 2;
+			}
+			document.getElementById('play1').style.borderColor = "yellow";
+		}
+
+		function undo() {
+			if (prevstate == "place") {
+				if (current != -1) {
+					document.getElementById(current).style.backgroundColor = "white";
+					rflag = 0;
+					if (pflag == 0) {
+						p2count++;
+						pflag = 1;
+						document.getElementById('play1').style.borderColor = "black";
+						document.getElementById('play2').style.borderColor = "yellow";
+					} else {
+						p1count++;
+						pflag = 0;
+						document.getElementById('play1').style.borderColor = "yellow";
+						document.getElementById('play2').style.borderColor = "black";
+					}
+				}
+				current = -1;
+				prevstate = "";
+				prevrc = -1;
+				prevrw = -1;
+			} else if (prevstate == "move") {
+				if (current != -1) {
+					rflag = 0;
+					prevrc = -1;
+					prevrw = -1;
+					document.getElementById(prevobject).style.backgroundColor = document.getElementById(current).style.backgroundColor;
+					document.getElementById(current).style.backgroundColor = "white";
+					if (pflag == 0) {
+						pflag = 1;
+						document.getElementById('play1').style.borderColor = "black";
+						document.getElementById('play2').style.borderColor = "yellow";
+					} else {
+						pflag = 0;
+						document.getElementById('play1').style.borderColor = "yellow";
+						document.getElementById('play2').style.borderColor = "black";
+					}
+				}
+				prevstate = "";
+				current = -1;
+			} else if (prevstate == "remove") {
+				if (current != -1) {
+					if (prevrw == -1) {
+						document.getElementById(prevrc).style.backgroundColor = "white";
+						if (pflag == 0)
+							p2count++;
+						else
+							p1count++;
+					} else {
+						document.getElementById(prevrw).style.backgroundColor = document.getElementById(prevrc).style.backgroundColor;
+						document.getElementById(prevrc).style.backgroundColor = "white";
+					}
+					if (pflag == 0) {
+						pp1count++;
+						pflag = 1;
+						document.getElementById('play1').style.borderColor = "black";
+						document.getElementById('play2').style.borderColor = "yellow";
+						document.getElementById(current).style.backgroundColor = "red";
+					} else {
+						pp2count++;
+						pflag = 0;
+						document.getElementById('play1').style.borderColor = "yellow";
+						document.getElementById('play2').style.borderColor = "black";
+						document.getElementById(current).style.backgroundColor = "green";
+					}
+				}
+				prevstate = "";
+				current = -1;
+				prevrc = -1;
+				prevrw = -1;
+			}
+		}
+
+		function play(id) {
+			var s = document.getElementById(id).style.backgroundColor;
+			var s3 = document.getElementById(prev).getAttribute("style");
+			document.getElementById(id).style.borderColor = "yellow";
+			document.getElementById(prev).style.borderColor = "black";
+			prev = id;
+			if (s != 'red' && s != 'green' && mflag == 0 && rflag == 0 && (p1count > 0 || p2count > 0)) {
+				if (pflag == 0 && p1count > 0) {
+					prevstate = "place";
+					current = id;
+					document.getElementById(id).style.backgroundColor = "red";
+					p1count--;
+					pflag = 1;
+					if (check1(id) && rflag == 0) {
+						rflag = 1;
+						prevrc = id;
+					}
+					if (rflag == 0) {
+						document.getElementById('play2').style.borderColor = "yellow";
+						document.getElementById('play1').style.borderColor = "black";
+					}
+				} else if (p2count > 0) {
+					prevstate = "place";
+					current = id;
+					document.getElementById(id).style.backgroundColor = "green";
+					p2count--;
+					pflag = 0;
+					if (check1(id) && rflag == 0) {
+						rflag = 1;
+						prevrc = id;
+					}
+					if (rflag == 0) {
+						document.getElementById('play1').style.borderColor = "yellow";
+						document.getElementById('play2').style.borderColor = "black";
+					}
+				}
+			} else if (rflag == 1 && mflag == 0) {
+				if (pflag == 0) {
+					if (s == 'red' && (!check1(id))) {
+						prevstate = "remove";
+						current = id;
+						document.getElementById(id).style.backgroundColor = "white";
+						rflag = 0;
+						pp1count--;
+						document.getElementById('play1').style.borderColor = "yellow";
+						document.getElementById('play2').style.borderColor = "black";
+					}
+				} else if (pflag == 1) {
+					if (s == 'green' && (!check1(id))) {
+						prevstate = "remove";
+						current = id;
+						document.getElementById(id).style.backgroundColor = "white";
+						rflag = 0;
+						pp2count--;
+						document.getElementById('play2').style.borderColor = "yellow";
+						document.getElementById('play1').style.borderColor = "black";
+					}
+				}
+				if (pp1count < 3)
+					window.alert("player2 wins");
+				else if (pp2count < 3)
+					window.alert("player1 wins");
+			} else if (p1count == 0 && p2count == 0 && mflag == 0 && rflag == 0) {
+				if (pflag == 0) {
+					if (s == 'red' && check2(id)) {
+						prevobject = id;
+						mflag = 1;
+					}
+				} else if (pflag == 1) {
+					if (s == 'green' && check2(id)) {
+						prevobject = id;
+						mflag = 1;
+					}
+				}
+			} else if (mflag == 1) {
+				if (check3(id, prevobject)) {
+					var s2 = document.getElementById(prevobject).style.backgroundColor;
+					if (s2 == 'red' || s2 == 'green') {
+						prevstate = "move";
+						current = id;
+						if (s2 == 'red')
+							document.getElementById(id).style.backgroundColor = "red";
+						else if (s2 == 'green')
+							document.getElementById(id).style.backgroundColor = "green";
+						document.getElementById(prevobject).style.backgroundColor = "white";
+						mflag = 0;
+						if (check1(id)) {
+							rflag = 1;
+							prevrc = id;
+							prevrw = prevobject;
+						}
+						if (pflag == 0) {
+							pflag = 1;
+							if (rflag == 0) {
+								document.getElementById('play2').style.borderColor = "yellow";
+								document.getElementById('play1').style.borderColor = "black";
+							}
+						} else {
+							pflag = 0;
+							if (rflag == 0) {
+								document.getElementById('play1').style.borderColor = "yellow";
+								document.getElementById('play2').style.borderColor = "black";
+							}
+						}
+					}
+				} else if (s == "red" || s == "green")
+					prevobject = id;
+			}
+		}
+
+		function check1(id) {
+			var count;
+			for (var i = 0; i < 2; i++) {
+				count = 0;
+				for (var j = 0; j < 3; j++) {
+					var s1 = document.getElementById(a[id][i][j]).style.backgroundColor;
+					var s2 = document.getElementById(id).style.backgroundColor;
+					if (s1 == s2)
+						count++;
+				}
+				if (count == 3)
+					return 1;
+			}
+			return 0;
+		}
+
+		function check2(id) {
+			var s = "";
+			for (var i = 0; i < move[id].length; i++) {
+				var c = document.getElementById(move[id][i]).style.backgroundColor;
+				if (c != 'red' && c != 'green')
+					return 1;
+			}
+			return 0;
+		}
+
+		function check3(id, previd) {
+			var c = document.getElementById(id).style.backgroundColor;
+			if (c == "red" || c == "green")
+				return 0;
+			for (var i = 0; i < move[previd].length; i++) {
+				if (move[previd][i] == id)
+					return 1;
+			}
+			return 0;
+		}
+      </script>
+   </body>
 </html>
+
